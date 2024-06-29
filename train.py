@@ -10,13 +10,14 @@ from data.dataloader import get_dataloader
 from model import VisionLanguageModel
 from datetime import datetime
 import os
+from tqdm import tqdm
 
 
 def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, loss_fn, device):
     running_loss = 0.0
     last_loss = 0.0
-
-    for i, data in enumerate(training_loader):
+    count = 0
+    for data in tqdm(training_loader):
         pixel_values, input_ids, attention_mask, labels = data
         pixel_values = pixel_values.to(device)
         input_ids = input_ids.to(device)
@@ -27,16 +28,17 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, l
 
         outputs = model(input_ids=input_ids, attention_mask=attention_mask, pixel_values=pixel_values, labels=labels)
 
-        loss = outputs.loss
+        loss = outputs
         loss.backward()
 
         optimizer.step()
 
         running_loss += loss.item()
-        if i % 1000 == 999:
-            last_loss = running_loss / 1000
-            print(f'  batch {i + 1} loss: {last_loss}')
-            tb_x = epoch_index * len(training_loader) + i + 1
+        count += 1
+        if count % 10 == 0:
+            last_loss = running_loss / 10
+            print(f'  batch {count + 1} loss: {last_loss}')
+            tb_x = epoch_index * len(training_loader) + count + 1
             tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.0
 
@@ -44,14 +46,14 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, l
 
 def main():
     # Hyperparameters
-    batch_size = 4
+    batch_size = 1
     num_epochs = 5
     learning_rate = 2e-5
     max_steps = 1000
     warmup_steps = 100
 
     # Paths
-    ann_path = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/annotations/captions_val2017.json'
+    ann_path = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/annotations/captions_train2017.json'
     images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/images/train2017'
 
     # Load dataset and dataloader
