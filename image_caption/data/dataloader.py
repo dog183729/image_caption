@@ -5,6 +5,13 @@ from PIL import Image
 from torch.utils.data import DataLoader
 from transformers import AutoImageProcessor, AutoTokenizer
 
+def get_tokenizer():
+    tokenizer = AutoTokenizer.from_pretrained("distilgpt2")
+    # add padding token
+    special_tokens = {"pad_token": "<PAD>"}
+    tokenizer.add_special_tokens(special_tokens)
+    return tokenizer
+
 
 class COCOCaptionDataLoader(DataLoader):
     def __init__(self, dataset, batch_size, shuffle, sampler, num_workers, pin_memory, drop_last):
@@ -15,10 +22,7 @@ class COCOCaptionDataLoader(DataLoader):
         )
         self.num_classes = len(dataset.all_tags)
         self.image_processor = AutoImageProcessor.from_pretrained("google/siglip-base-patch16-224")
-        self.tokenizer = AutoTokenizer.from_pretrained("distilgpt2")
-        # add padding token
-        special_tokens = {"pad_token": "<PAD>"}
-        self.tokenizer.add_special_tokens(special_tokens)
+        self.tokenizer = get_tokenizer()
 
     def collate_fn(self, batch):
         """
@@ -61,7 +65,7 @@ if __name__ == "__main__":
     from dataset import COCOCaptionDataset
     # ann_path = "C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/annotations/captions_val2017.json"
     # images_dir = "C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/images/val2017"
-    ann_path = "captions_train2017_with_tags.json"
+    ann_path = "captions_train2017_with_tags_updated.json"
     images_dir = "/Users/shuangliu/Downloads/data/coco/images/train2017"
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
     dataloader = get_dataloader(dataset, batch_size=4, shuffle=True)
