@@ -46,7 +46,7 @@ class VisionLanguageModel(nn.Module):
 
         # Caption decoder forward path
         caption_loss = self.caption_decoder(vision_embedding, tag_names, input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-        return caption_loss
+        return tag_logits, caption_loss
 
 
 if __name__ == "__main__":

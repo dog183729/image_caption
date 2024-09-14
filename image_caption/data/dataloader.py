@@ -49,7 +49,7 @@ class COCOCaptionDataLoader(DataLoader):
 
         tag_labels = torch.concat(tag_labels, dim=0)  # batch_size * num_classes
         pixel_values = torch.concat(pixel_values, dim=0)
-        inputs = self.tokenizer(captions, padding="longest", return_tensors="pt")
+        inputs = self.tokenizer(captions, padding="longest", return_tensors="pt", max_length=384, truncation=True)
         input_ids = inputs.input_ids
         attention_mask = inputs.attention_mask
         labels = input_ids.clone()

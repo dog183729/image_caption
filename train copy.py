@@ -2,6 +2,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torch.nn import BCEWithLogitsLoss
 from transformers import get_linear_schedule_with_warmup, GPT2Tokenizer
 from image_caption.data.dataset import COCOCaptionDataset
 from image_caption.data.dataloader import get_dataloader
@@ -20,7 +21,7 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
     total_batches = len(training_loader)
 
     for data in tqdm(training_loader):
-        pixel_values, _, input_ids, attention_mask, labels = data
+        pixel_values, tag_labels, input_ids, attention_mask, labels = data
         pixel_values = pixel_values.to(device)
         input_ids = input_ids.to(device)
         attention_mask = attention_mask.to(device)
@@ -28,8 +29,13 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
 
         optimizer.zero_grad()
 
-        loss = model(input_ids=input_ids, attention_mask=attention_mask, pixel_values=pixel_values, labels=labels)
+        tag_logits, caption_loss = model(input_ids=input_ids, attention_mask=attention_mask, pixel_values=pixel_values, labels=labels)
 
+        # tag loss
+        tag_loss_fn = BCEWithLogitsLoss()
+        tag_loss = tag_loss_fn(tag_logits, tag_labels)
+
+        loss = tag_loss + caption_loss
         loss.backward()
 
         optimizer.step()
@@ -39,7 +45,7 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
 
         if count % 10 == 0:
             last_loss = running_loss / 10
-            print(f'  batch {count} loss: {last_loss}')
+            print(f'  batch {count} loss: {last_loss} tag_loss: {tag_loss}, caption_loss: {caption_loss}')
             tb_x = epoch_index * len(training_loader) + count + 1
             tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.0
@@ -85,6 +91,7 @@ def main():
     # Paths
     ann_path = 'captions_train2017_with_tags_updated.json'
     images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017'
+    # images_dir = '/Users/shuangliu/Downloads/data/coco/images/train2017'
     checkpoint_path = 'checkpoint.pth'
 
     # Load dataset and dataloader
