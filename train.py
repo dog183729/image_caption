@@ -5,9 +5,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from transformers import get_linear_schedule_with_warmup
-from data.dataset import COCOCaptionDataset
-from data.dataloader import get_dataloader
-from model import VisionLanguageModel
+from image_caption.data.dataset import COCOCaptionDataset
+from image_caption.data.dataloader import get_dataloader
+from image_caption.model.model import VisionLanguageModel
 from datetime import datetime
 import os
 from tqdm import tqdm
@@ -53,8 +53,8 @@ def main():
     warmup_steps = 100
 
     # Paths
-    ann_path = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/annotations/captions_train2017.json'
-    images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption-feat-add-dataloader/images/train2017'
+    ann_path = 'captions_train2017_with_tags_updated.json'
+    images_dir = 'captions_val2017_with_tags_updated.json'
 
     # Load dataset and dataloader
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)

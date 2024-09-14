@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 from transformers import GPT2Tokenizer
-
+import sys
+sys.path.append("C:/Users/Chris/Desktop/直通硅谷/project/image_caption/")
 from image_caption.model.blocks.vision_encoder import VisionEncoder
 from image_caption.model.blocks.tag_decoder import TagDecoder
 from image_caption.model.blocks.caption_decoder import CaptionDecoder
@@ -53,7 +54,7 @@ if __name__ == "__main__":
 
     # init dataset
     ann_path = "captions_train2017_with_tags_updated.json"
-    images_dir = "/Users/shuangliu/Downloads/data/coco/images/train2017"
+    images_dir = "C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017"
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
 
     # init caption inputs

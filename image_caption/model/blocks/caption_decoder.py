@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-
+import sys
+sys.path.append("C:/Users/Chris/Desktop/直通硅谷/project/image_caption/")
 from image_caption.data.dataloader import get_tokenizer
 
 
@@ -22,7 +23,7 @@ class CaptionDecoder(nn.Module):
         """
         tag_names = [",".join(tag_list) for tag_list in tag_names]  # ["tag1,tag2,tag3", "tag4,tag5", ...]
         tag_inputs = self.text_tokenizer(tag_names, padding="longest", return_tensors="pt")
-        tag_input_ids, tag_attention_mask = tag_inputs.input_ids.to(vision_embedding.device), tag_inputs.attention_mask.to(vision_embedding.device)
+        tag_input_ids, tag_attention_mask = tag_inputs.input_ids.long().to(vision_embedding.device), tag_inputs.attention_mask.to(vision_embedding.device)
         tag_input_embeddings = self.text_decoder.transformer.wte(tag_input_ids)  # batch_size * tag_seq_len * 768
 
         # Text decoder input embeddings
