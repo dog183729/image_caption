@@ -23,7 +23,7 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
     optimizer.zero_grad()
 
     for data in tqdm(training_loader):
-        pixel_values, tag_labels, input_ids, attention_mask, labels = data
+        pixel_values, tag_labels, input_ids, attention_mask, labels, _ = data
         pixel_values = pixel_values.to(device)
         tag_labels = tag_labels.to(device)
         input_ids = input_ids.to(device)
@@ -36,7 +36,8 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
         tag_loss_fn = BCEWithLogitsLoss()
         tag_loss = tag_loss_fn(tag_logits, tag_labels)
 
-        loss = (tag_loss + caption_loss) / accumulate_steps
+        # loss = (tag_loss + caption_loss) / accumulate_steps
+        loss = tag_loss / accumulate_steps
         loss.backward()
 
         running_loss += loss.item()
@@ -137,7 +138,7 @@ def main():
 
         with torch.no_grad():
             for i, vdata in enumerate(validation_loader):
-                v_pixel_values, v_input_ids, v_attention_mask, v_labels = vdata
+                v_pixel_values, v_tag_labels, v_input_ids, v_attention_mask, v_labels, _ = vdata
                 v_pixel_values = v_pixel_values.to(device)
                 v_input_ids = v_input_ids.to(device)
                 v_attention_mask = v_attention_mask.to(device)

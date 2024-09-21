@@ -54,7 +54,7 @@ class COCOCaptionDataLoader(DataLoader):
         attention_mask = inputs.attention_mask
         labels = input_ids.clone()
         labels[attention_mask == 0] = -100
-        return pixel_values, tag_labels, input_ids, attention_mask, labels
+        return pixel_values, tag_labels, input_ids, attention_mask, labels, captions
 
 
 def get_dataloader(dataset, batch_size, shuffle, sampler=None, num_workers=0, pin_memory=False, drop_last=False):
