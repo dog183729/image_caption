@@ -68,6 +68,7 @@ class VisionLanguageModel(nn.Module):
         tag_names = [",".join(tag_list) for tag_list in tag_names]  # ["tag1,tag2,tag3", "tag4,tag5", ...]
         tag_inputs = self.text_tokenizer(tag_names, padding="longest", return_tensors="pt", max_length=384,
                                          truncation=True)
+
         tag_input_ids, tag_attention_mask = tag_inputs.input_ids.long().to(
             vision_embedding.device), tag_inputs.attention_mask.to(vision_embedding.device)
         tag_input_embeddings = self.caption_decoder.text_decoder.transformer.wte(tag_input_ids)  # batch_size * tag_seq_len * 768
@@ -76,7 +77,7 @@ class VisionLanguageModel(nn.Module):
         combined_embedding = torch.cat([vision_embedding, tag_input_embeddings],
                                        dim=1)  # batch_size * (196 + tag_seq_len) * 768
         extended_attention_mask = torch.cat(
-            [torch.ones(attention_mask.size(0), vision_embedding.size(1)).to(attention_mask.device), tag_attention_mask],
+            [torch.ones(tag_attention_mask.size(0), vision_embedding.size(1)).to(tag_attention_mask.device), tag_attention_mask],
             dim=1)  # batch_size * (196 + tag_seq_len)
 
         # Call caption generation
@@ -84,7 +85,7 @@ class VisionLanguageModel(nn.Module):
             inputs_embeds=combined_embedding, attention_mask=extended_attention_mask, max_length=1024
         )
         captions = self.text_tokenizer.batch_decode(outputs)
-        return captions
+        return tag_logits, captions
 
 
 if __name__ == "__main__":

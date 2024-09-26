@@ -11,6 +11,7 @@ class CaptionDecoder(nn.Module):
         super(CaptionDecoder, self).__init__()
         self.text_tokenizer = get_tokenizer()
         self.text_decoder = GPT2LMHeadModel.from_pretrained("distilgpt2")
+        self.text_decoder.resize_token_embeddings(len(self.text_tokenizer))
 
     def forward(self, vision_embedding, tag_names, input_ids, attention_mask, labels):
         """
