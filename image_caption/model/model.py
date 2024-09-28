@@ -84,7 +84,7 @@ class VisionLanguageModel(nn.Module):
         outputs = self.caption_decoder.text_decoder.generate(
             inputs_embeds=combined_embedding, attention_mask=extended_attention_mask, max_length=1024
         )
-        captions = self.text_tokenizer.batch_decode(outputs)
+        captions = self.text_tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return tag_logits, captions
 
 

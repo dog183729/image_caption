@@ -16,7 +16,7 @@ from image_caption.model.model import VisionLanguageModel
 
 def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path):
     running_loss = 0.0
-    last_loss = 0.0
+    avg_loss = 0.0
     count = 0
     accumulate_steps = 32
     total_batches = len(training_loader)
@@ -36,12 +36,13 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
         tag_loss_fn = BCEWithLogitsLoss()
         tag_loss = tag_loss_fn(tag_logits, tag_labels)
 
-        # loss = (tag_loss + caption_loss) / accumulate_steps
-        loss = tag_loss / accumulate_steps
+        loss = (tag_loss + caption_loss) / accumulate_steps
+        # loss = tag_loss / accumulate_steps
         loss.backward()
 
         running_loss += loss.item()
         count += 1
+        avg_loss += loss.item()
 
         if count % accumulate_steps == 0:
             print(f'  batch {count} loss: {running_loss} tag_loss: {tag_loss}, caption_loss: {caption_loss}')
@@ -49,7 +50,7 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
             optimizer.zero_grad()
 
             tb_x = epoch_index * len(training_loader) + count + 1
-            tb_writer.add_scalar('Loss/train', last_loss, tb_x)
+            tb_writer.add_scalar('Loss/train', avg_loss, tb_x)
             running_loss = 0.0
 
         # Save checkpoint at one-fourth, half, three-fourths, and full epoch
@@ -63,7 +64,8 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
             }, checkpoint_name)
             print(f"Checkpoint saved at batch {count} of epoch {epoch_index + 1}")
 
-    return last_loss
+    avg_loss /= count
+    return avg_loss
 
 def save_checkpoint(state, filename='checkpoint.pth'):
     torch.save(state, filename)
@@ -131,21 +133,24 @@ def main():
         print(f'EPOCH {epoch + 1}:')
 
         model.train(True)
-        avg_loss = train_one_epoch(epoch, writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path)
+        # avg_loss = train_one_epoch(epoch, writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path)
+        avg_loss = 0.0
 
         running_vloss = 0.0
         model.eval()
 
         with torch.no_grad():
-            for i, vdata in enumerate(validation_loader):
+            for i, vdata in tqdm(enumerate(validation_loader)):
                 v_pixel_values, v_tag_labels, v_input_ids, v_attention_mask, v_labels, _ = vdata
                 v_pixel_values = v_pixel_values.to(device)
                 v_input_ids = v_input_ids.to(device)
                 v_attention_mask = v_attention_mask.to(device)
                 v_labels = v_labels.to(device)
 
-                v_loss = model(input_ids=v_input_ids, attention_mask=v_attention_mask, pixel_values=v_pixel_values, labels=v_labels)
-                running_vloss += v_loss.item()
+                v_tag_logits, v_caption_loss = model(input_ids=v_input_ids, attention_mask=v_attention_mask, pixel_values=v_pixel_values, labels=v_labels)
+                tag_loss_fn = BCEWithLogitsLoss()
+                v_tag_loss = tag_loss_fn(v_tag_logits, v_tag_labels)
+                running_vloss += (v_tag_loss.item() + v_caption_loss.item())
 
         avg_vloss = running_vloss / (i + 1)
         print(f'LOSS train {avg_loss} valid {avg_vloss}')
