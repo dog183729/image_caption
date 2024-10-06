@@ -70,10 +70,10 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
 def save_checkpoint(state, filename='checkpoint.pth'):
     torch.save(state, filename)
 
-def load_checkpoint(checkpoint_path, model, optimizer):
+def load_checkpoint(checkpoint_path, model, optimizer, device):
     if os.path.isfile(checkpoint_path):
         print(f"Loading checkpoint '{checkpoint_path}'")
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint['epoch']
@@ -123,7 +123,7 @@ def main():
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=max_steps)
 
     # Load from checkpoint if available
-    start_epoch = load_checkpoint(checkpoint_path, model, optimizer)
+    start_epoch = load_checkpoint(checkpoint_path, model, optimizer, device)
 
     # TensorBoard writer
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -133,8 +133,7 @@ def main():
         print(f'EPOCH {epoch + 1}:')
 
         model.train(True)
-        # avg_loss = train_one_epoch(epoch, writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path)
-        avg_loss = 0.0
+        avg_loss = train_one_epoch(epoch, writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path)
 
         running_vloss = 0.0
         model.eval()
