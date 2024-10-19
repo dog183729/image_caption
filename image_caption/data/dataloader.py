@@ -70,11 +70,14 @@ if __name__ == "__main__":
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
     dataloader = get_dataloader(dataset, batch_size=4, shuffle=True)
     for batch in dataloader:
-        pixel_values, tag_labels, input_ids, attention_mask, labels = batch
+        pixel_values, tag_labels, input_ids, attention_mask, labels, captions = batch
         print(f"pixel_values shape: {pixel_values.shape}")
         print(f"tag_labels shape: {tag_labels.shape}")
         print(f"input_ids shape: {input_ids.shape}")
         print(f"attention_mask shape: {attention_mask.shape}")
         print(f"labels shape: {labels.shape}")
         break
-    
+
+    from IPython import embed
+    embed()
+    assert False
