@@ -18,7 +18,7 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
     running_loss = 0.0
     avg_loss = 0.0
     count = 0
-    accumulate_steps = 32
+    accumulate_steps = 1
     total_batches = len(training_loader)
     optimizer.zero_grad()
 
@@ -85,23 +85,23 @@ def load_checkpoint(checkpoint_path, model, optimizer, device):
 
 def main():
     # Hyperparameters
-    batch_size = 1
+    batch_size = 16
     num_epochs = 5
-    learning_rate = 2e-5
+    learning_rate = 1e-4
     max_steps = 1000
     warmup_steps = 100
     save_checkpoint_freq = 4  # Save checkpoint every one-fourth of an epoch
 
     # Paths
-    ann_path = 'captions_train2017_with_tags_updated.json'
+    ann_path = '/mnt/bn/algo-masp-nas-2/benchmark/coco/annotations/captions_train2017_with_tags_updated.json'
     # images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017'
-    images_dir = '/Users/shuangliu/Downloads/data/coco/images/train2017'
+    images_dir = '/mnt/bn/algo-masp-nas-2/benchmark/coco/train2017'
     checkpoint_path = 'checkpoint.pth'
 
     # Load dataset and dataloader
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
-    training_loader = get_dataloader(dataset, batch_size=batch_size, shuffle=True)
-    validation_loader = get_dataloader(dataset, batch_size=batch_size, shuffle=False)
+    training_loader = get_dataloader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    validation_loader = get_dataloader(dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     # Load model components
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -118,9 +118,8 @@ def main():
         drop_prob=0.1
     ).to(device)
 
-    # Optimizer and scheduler
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=max_steps)
+    # Optimizer
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Load from checkpoint if available
     start_epoch = load_checkpoint(checkpoint_path, model, optimizer, device)
@@ -135,29 +134,29 @@ def main():
         model.train(True)
         avg_loss = train_one_epoch(epoch, writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path)
 
-        running_vloss = 0.0
-        model.eval()
+        # running_vloss = 0.0
+        # model.eval()
 
-        with torch.no_grad():
-            for i, vdata in tqdm(enumerate(validation_loader)):
-                v_pixel_values, v_tag_labels, v_input_ids, v_attention_mask, v_labels, _ = vdata
-                v_pixel_values = v_pixel_values.to(device)
-                v_input_ids = v_input_ids.to(device)
-                v_attention_mask = v_attention_mask.to(device)
-                v_labels = v_labels.to(device)
+        # with torch.no_grad():
+        #     for i, vdata in tqdm(enumerate(validation_loader)):
+        #         v_pixel_values, v_tag_labels, v_input_ids, v_attention_mask, v_labels, _ = vdata
+        #         v_pixel_values = v_pixel_values.to(device)
+        #         v_input_ids = v_input_ids.to(device)
+        #         v_attention_mask = v_attention_mask.to(device)
+        #         v_labels = v_labels.to(device)
 
-                v_tag_logits, v_caption_loss = model(input_ids=v_input_ids, attention_mask=v_attention_mask, pixel_values=v_pixel_values, labels=v_labels)
-                tag_loss_fn = BCEWithLogitsLoss()
-                v_tag_loss = tag_loss_fn(v_tag_logits, v_tag_labels)
-                running_vloss += (v_tag_loss.item() + v_caption_loss.item())
+        #         v_tag_logits, v_caption_loss = model(input_ids=v_input_ids, attention_mask=v_attention_mask, pixel_values=v_pixel_values, labels=v_labels)
+        #         tag_loss_fn = BCEWithLogitsLoss()
+        #         v_tag_loss = tag_loss_fn(v_tag_logits, v_tag_labels)
+        #         running_vloss += (v_tag_loss.item() + v_caption_loss.item())
 
-        avg_vloss = running_vloss / (i + 1)
-        print(f'LOSS train {avg_loss} valid {avg_vloss}')
+        # avg_vloss = running_vloss / (i + 1)
+        # print(f'LOSS train {avg_loss} valid {avg_vloss}')
 
-        writer.add_scalars('Training vs. Validation Loss',
-                           {'Training': avg_loss, 'Validation': avg_vloss},
-                           epoch + 1)
-        writer.flush()
+        # writer.add_scalars('Training vs. Validation Loss',
+        #                    {'Training': avg_loss, 'Validation': avg_vloss},
+        #                    epoch + 1)
+        # writer.flush()
 
         # Save checkpoint at the end of each epoch
         save_checkpoint({

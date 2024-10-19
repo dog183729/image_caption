@@ -9,7 +9,6 @@ class VisionEncoder(nn.Module):
         super(VisionEncoder, self).__init__()
         self.vision_encoder = SiglipVisionModel.from_pretrained("google/siglip-base-patch16-224")
         self.projection = nn.Linear(self.vision_encoder.config.hidden_size, d_model)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def forward(self, pixel_values):
         """
@@ -18,7 +17,7 @@ class VisionEncoder(nn.Module):
         """
         # Vision encoder forward pass
         vision_output = self.vision_encoder(pixel_values=pixel_values)  # batch_size * 196 * 768
-        vision_embedding = self.projection(vision_output.last_hidden_state).to(self.device)  # batch_size * 196 * 768
+        vision_embedding = self.projection(vision_output.last_hidden_state)  # batch_size * 196 * 768
         return vision_embedding
 
 

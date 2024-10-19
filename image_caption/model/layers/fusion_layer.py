@@ -18,8 +18,6 @@ class FusionLayer(nn.Module):
         self.ffn = FeedForwardLayer(d_model=d_model, hidden=ffn_hidden, drop_prob=drop_prob)
         self.norm2 = LayerNorm(d_model)
         self.dropout2 = nn.Dropout(p=drop_prob)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.to(self.device)
 
     def forward(self, vision_emb, tag_emb):
         """
@@ -27,10 +25,6 @@ class FusionLayer(nn.Module):
         :param tag_emb: tag embedding with shape (batch_size, num_tags, d_model)
         :return: fused embedding with shape (batch_size, num_tags, d_model)
         """
-        
-        vision_emb = vision_emb.to(tag_emb.device)
-        # print(f"vision_emb shape: {vision_emb.shape}, device: {vision_emb.device}")
-        # print(f"tag_emb shape: {tag_emb.shape}, device: {tag_emb.device}")
         # 1. compute vision - tag cross attention
         x, _ = self.cross_attention(query=tag_emb, key=vision_emb, value=vision_emb)  # b, seq_len, d_model
         x = self.dropout1(x)

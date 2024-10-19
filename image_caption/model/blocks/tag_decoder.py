@@ -1,7 +1,6 @@
 from torch import nn
 import torch
 import sys
-sys.path.append("C:/Users/Chris/Desktop/直通硅谷/project/image_caption/")
 from image_caption.model.layers.fusion_layer import FusionLayer
 
 
@@ -13,17 +12,15 @@ class TagDecoder(nn.Module):
     def __init__(self, tag_embedding, d_model, ffn_hidden, n_head, n_layers, drop_prob):
         super(TagDecoder, self).__init__()
         self.tag_emb = nn.Parameter(tag_embedding)
-        self.fusion_layers = [
+        self.fusion_layers = nn.ModuleList([
             FusionLayer(
                 d_model=d_model, ffn_hidden=ffn_hidden, n_head=n_head, drop_prob=drop_prob
             ) for _ in range(n_layers)
-        ]
+        ])
         self.linear = nn.Linear(d_model, 1)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def forward(self, vision_embedding):
-        tag_embedding = self.tag_emb.unsqueeze(0).repeat(vision_embedding.shape[0], 1, 1).to(self.device)  # (N, num_tags, d_model)
-
+        tag_embedding = self.tag_emb.unsqueeze(0).repeat(vision_embedding.shape[0], 1, 1)  # (N, num_tags, d_model)
         for layer in self.fusion_layers:
             tag_embedding = layer(vision_embedding, tag_embedding)  # (N, num_tags, d_model)
         tag_logits = self.linear(tag_embedding)  # (N, num_tags, 1)

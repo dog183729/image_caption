@@ -91,9 +91,11 @@ class VisionLanguageModel(nn.Module):
 if __name__ == "__main__":
     from image_caption.data.dataset import COCOCaptionDataset
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     # init dataset
-    ann_path = "captions_train2017_with_tags_updated.json"
-    images_dir = "C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017"
+    ann_path = "/mnt/bn/algo-masp-nas-2/benchmark/coco/annotations/captions_train2017_with_tags_updated.json"
+    images_dir = "/mnt/bn/algo-masp-nas-2/benchmark/coco/train2017"
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
 
     # init caption inputs
@@ -110,8 +112,15 @@ if __name__ == "__main__":
     )
 
     dummy_pixel_values = torch.rand(1, 3, 224, 224)
+
+    model = model.eval().to(device)
+    dummy_pixel_values = dummy_pixel_values.to(device)
+    input_ids = input_ids.to(device)
+    attention_mask = attention_mask.to(device)
+    labels = labels.to(device)
+
     tag_logits, caption_loss = model(input_ids=input_ids, attention_mask=attention_mask, pixel_values=dummy_pixel_values, labels=labels)
     print("Caption loss:", caption_loss.item())
 
-    captions = model.generate(pixel_values=dummy_pixel_values)
+    _, captions = model.generate(pixel_values=dummy_pixel_values)
     print(f"Captions: {captions}")
