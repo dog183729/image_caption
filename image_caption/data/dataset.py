@@ -44,6 +44,7 @@ class COCOCaptionDataset(Dataset):
         for i in range(top_n):
             print(f"{self.all_tags[max_ids[i].item()]}: {max_similarities[i].item()}")
 
+    @torch.no_grad()
     def compute_embedding(self):
         print("Computing tag embeddings...")
         tag_embedding = []
@@ -52,7 +53,7 @@ class COCOCaptionDataset(Dataset):
             tag_embedding.append(self.tag_encoder(**tag_ids))
 
         tag_embedding = torch.concat([t.pooler_output for t in tag_embedding], dim=0)  # (num_tags, 768)
-        return tag_embedding
+        return tag_embedding.detach()
 
     def __len__(self):
         """return the dataset size"""
