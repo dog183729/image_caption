@@ -16,14 +16,14 @@ from nltk.translate.bleu_score import sentence_bleu
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    ann_path = 'captions_train2017_with_tags_updated.json'
+    ann_path = '/mnt/bn/algo-masp-nas-2/benchmark/coco/annotations/captions_train2017_with_tags_updated.json'
     # images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017'
-    images_dir = '/Users/shuangliu/Downloads/data/coco/images/train2017'
-    checkpoint_path = 'checkpoint.pth'
+    images_dir = '/mnt/bn/algo-masp-nas-2/benchmark/coco/train2017'
+    checkpoint_path = 'checkpoint.pth_epoch2_batch18492.pth'
 
     # Load dataset and dataloader
     dataset = COCOCaptionDataset(ann_path=ann_path, images_dir=images_dir)
-    dataloader = get_dataloader(dataset, batch_size=1, shuffle=False)
+    dataloader = get_dataloader(dataset, batch_size=8, shuffle=False)
 
     # Initialize model
     model = VisionLanguageModel(
@@ -78,8 +78,10 @@ def main():
 
     # compute bleu score for each data
     all_bleu_scores = []
-    for caption, gt_caption in tqdm(zip(all_captions, all_gt_captions)):
-        references = [gt_caption.split()]
+    for i, (caption, gt_caption) in enumerate(tqdm(zip(all_captions, all_gt_captions))):
+        print(f"\nground truth caption: {gt_caption}")
+        print(f"\ngenerated caption: {caption}")
+        references = [gt_caption.split()]  # remove eos token
         hypothesis = caption.split()
         score = sentence_bleu(references, hypothesis)
         all_bleu_scores.append(score)

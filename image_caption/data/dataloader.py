@@ -41,7 +41,7 @@ class COCOCaptionDataLoader(DataLoader):
             image = Image.open(image_path).convert("RGB")
             image = self.image_processor(image, return_tensors="pt")
             pixel_values.append(image.pixel_values)
-            captions.append(caption)
+            captions.append(caption + self.tokenizer.eos_token)
 
             label = torch.zeros((1, self.num_classes))  # 1 * num_classes
             label[:, tag_ids] = 1
