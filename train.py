@@ -1,18 +1,15 @@
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torch.nn import BCEWithLogitsLoss
-from transformers import get_linear_schedule_with_warmup, GPT2Tokenizer
+from transformers import GPT2Tokenizer
 from image_caption.data.dataset import COCOCaptionDataset
 from image_caption.data.dataloader import get_dataloader
 from datetime import datetime
 import os
 from tqdm import tqdm
-from image_caption.model.blocks.vision_encoder import VisionEncoder
-from image_caption.model.blocks.tag_decoder import TagDecoder
-from image_caption.model.blocks.caption_decoder import CaptionDecoder
 from image_caption.model.model import VisionLanguageModel
+
 
 def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, device, save_checkpoint_freq, checkpoint_path):
     running_loss = 0.0
@@ -67,8 +64,10 @@ def train_one_epoch(epoch_index, tb_writer, model, training_loader, optimizer, d
     avg_loss /= count
     return avg_loss
 
+
 def save_checkpoint(state, filename='checkpoint.pth'):
     torch.save(state, filename)
+
 
 def load_checkpoint(checkpoint_path, model, optimizer, device):
     if os.path.isfile(checkpoint_path):
@@ -83,6 +82,7 @@ def load_checkpoint(checkpoint_path, model, optimizer, device):
         print(f"No checkpoint found at '{checkpoint_path}', starting from scratch.")
         return 0
 
+
 def main():
     # Hyperparameters
     batch_size = 16
@@ -93,9 +93,11 @@ def main():
     save_checkpoint_freq = 4  # Save checkpoint every one-fourth of an epoch
 
     # Paths
-    ann_path = '/mnt/bn/algo-masp-nas-2/benchmark/coco/annotations/captions_train2017_with_tags_updated.json'
-    # images_dir = 'C:/Users/Chris/Desktop/直通硅谷/project/image_caption/images/train2017'
-    images_dir = '/mnt/bn/algo-masp-nas-2/benchmark/coco/train2017'
+    # ann_path = '/mnt/bn/algo-masp-nas-2/benchmark/coco/annotations/captions_train2017_with_tags_updated.json'
+    # images_dir = '/mnt/bn/algo-masp-nas-2/benchmark/coco/train2017'
+
+    ann_path = 'captions_train2017_with_tags_updated.json'
+    images_dir = '/Users/shuangliu/Downloads/data/coco/images/train2017'
     checkpoint_path = 'checkpoint.pth'
 
     # Load dataset and dataloader
